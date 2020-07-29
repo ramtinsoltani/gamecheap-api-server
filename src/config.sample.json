@@ -1,0 +1,52 @@
+{
+  "port": 5000,
+  "hostUrl": "http://localhost:5000",
+  "token": {
+    "accessSecret": "NOT_PROVIDED",
+    "refreshSecret": "NOT_PROVIDED",
+    "verificationSecret": "NOT_PROVIDED",
+    "accessLifespan": 1800,
+    "refreshLifespan": 86400
+  },
+  "database": {
+    "host": "localhost",
+    "port": 27017,
+    "db": "gamecheap"
+  },
+  "email": {
+    "smtpHost": "NOT_PROVIDED",
+    "smtpPort": 465,
+    "smtpUser": "NOT_PROVIDED",
+    "smtpPass": "NOT_PROVIDED",
+    "senderName": "GameCheap",
+    "senderEmail": "NOT_PROVIDED"
+  },
+  "igdb": {
+    "host": "https://api-v3.igdb.com",
+    "token": "NOT_PROVIDED",
+    "endpoints": {
+      "games": "/games",
+      "covers": "/covers",
+      "screenshots": "/screenshots",
+      "ageRatings": "/age_ratings",
+      "genres": "/genres"
+    },
+    "dataTemplates": {
+      "games": "fields name,summary,storyline,status,category,age_ratings,cover,genres,popularity,total_rating,total_rating_count,first_release_date,screenshots,similar_games; where id = {{id}};",
+      "gamesShort": "fields name,cover; where id = {{id}};",
+      "gamesQuery": "search \"{{query}}\"; fields name,cover;",
+      "covers": "fields image_id; where id = {{id}};",
+      "screenshots": "fields image_id; where id = ({{ids}});",
+      "ageRatings": "fields category,rating; where id = ({{ids}});",
+      "genres": "fields name; where id = ({{ids}});"
+    },
+    "urlTemplates": {
+      "covers": "https://images.igdb.com/igdb/image/upload/t_720p/{{id}}.jpg",
+      "thumbnails": "https://images.igdb.com/igdb/image/upload/t_cover_small/{{id}}.jpg",
+      "screenshotsLarge": "https://images.igdb.com/igdb/image/upload/t_screenshot_huge/{{id}}.jpg",
+      "screenshotsSmall": "https://images.igdb.com/igdb/image/upload/t_screenshot_big/{{id}}.jpg",
+      "headers": "https://images.igdb.com/igdb/image/upload/t_screenshot_huge/{{id}}.jpg"
+    }
+  },
+  "consoleLogLevels": "all"
+}

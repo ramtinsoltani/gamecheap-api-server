@@ -1,0 +1,23 @@
+{
+  "@steroids/core": [
+    "@steroids/core"
+  ],
+  "@steroids/models": [
+    "@steroids/models"
+  ],
+  "@steroids/router/*": [
+    "routers/*.router"
+  ],
+  "@steroids/service/*": [
+    "services/*.service"
+  ],
+  "@steroids/model/*": [
+    "models/*.model"
+  ],
+  "@steroids/validator/*": [
+    "validators/*.validator"
+  ],
+  "@steroids/middleware/*": [
+    "middleware/*.middleware"
+  ]
+}

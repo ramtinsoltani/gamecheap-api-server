@@ -1,0 +1,5 @@
+node_modules
+dist
+docs
+firebase-admin-credential.json
+/src/config.json
