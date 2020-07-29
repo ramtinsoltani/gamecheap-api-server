@@ -263,7 +263,7 @@ export class AuthService implements OnInjection, OnConfig {
 
     // Send verification email
     await this.email.send(
-      'GameCheap account verification',
+      'GameCheap Account Verification',
       user.email,
       this.email.renderTemplate<VerificationTemplateData>('account-verification', {
         firstName: user.firstName,
