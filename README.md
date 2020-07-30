@@ -138,7 +138,7 @@ If a new email is needed, it can be requested through the [Resend Verification E
 
 ### Password Reset
 
-A password reset can be requested through the [Password Reset Endpoint](#auth-resetsend). This endpoint send a short-living code to the user's email which must be provided in the [Complete Password Reset Endpoint](#auth-resetcomplete) with the new password.
+A password reset can be requested through the [Password Reset Endpoint](#post-authresetsend). This endpoint send a short-living code to the user's email which must be provided in the [Complete Password Reset Endpoint](#post-authresetcomplete) with the new password.
 
 ### Tokens
 
@@ -415,7 +415,7 @@ Returns a specific user's profile information.
 
 ---
 
-#### GET /user/:id/update
+#### POST /user/:id/update
 
 Update a specific user's profile information.
 
@@ -527,7 +527,7 @@ Returns a specific purchase data.
 
 ---
 
-#### GET /purchase/:id/refund
+#### POST /purchase/:id/refund
 
 Refunds a specific purchase.
 
