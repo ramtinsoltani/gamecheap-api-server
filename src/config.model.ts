@@ -51,5 +51,9 @@ export interface ServerConfig extends BaseServerConfig {
       headers: string;
     };
   };
+  maxmind: {
+    dbLink: string;
+    key: string;
+  };
 
 }

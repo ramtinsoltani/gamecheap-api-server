@@ -1,7 +1,12 @@
-import { Service, OnConfig, ServerConfig, ServerError } from '@steroids/core';
+import { Service, OnConfig, OnInjection, ServerConfig, ServerError } from '@steroids/core';
 import axios from 'axios';
 import mustache from 'mustache';
 import Fuse from 'fuse.js';
+import maxmind, { CountryResponse, Reader } from 'maxmind';
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
+import targz from 'targz';
 
 import { AxiosInstance } from 'axios';
 import {
@@ -27,15 +32,28 @@ import UserModel from '@steroids/model/user';
 import PurchaseModel from '@steroids/model/purchase';
 import LibraryModel from '@steroids/model/library';
 
+import { TasksService } from '@steroids/service/tasks';
+
 @Service({
   name: 'games'
 })
-export class GamesService implements OnConfig {
+export class GamesService implements OnConfig, OnInjection {
 
   private igdbConfig: ServerConfig['igdb'];
+  private maxmindConfig: ServerConfig['maxmind'];
   private igdbApi: AxiosInstance;
+  private tasks: TasksService;
+  private ipDatabaseReady: boolean = false;
+  private IP_DATABASE_PATH = path.resolve(os.homedir(), '.gamecheap', 'maxmind-country.mmdb');
+  private ipDatabase: Reader<CountryResponse>;
 
-  onConfig(config: ServerConfig) {
+  onInjection(services: any) {
+
+    this.tasks = services.tasks;
+
+  }
+
+  async onConfig(config: ServerConfig) {
 
     this.igdbConfig = config.igdb;
     this.igdbApi = axios.create({
@@ -46,6 +64,109 @@ export class GamesService implements OnConfig {
         'user-key': this.igdbConfig.token
       },
       validateStatus: null
+    });
+    this.maxmindConfig = config.maxmind;
+
+    await this.init();
+
+  }
+
+  /**
+  * Registers tasks.
+  */
+  async init() {
+
+    this.tasks.events.on('ready', () => {
+
+      // Run weekly
+      this.tasks.register('maxmind-update', 7 * 24 * 60 * 60, true, async data => {
+
+        if ( data.lastUpdated && Date.now() - data.lastUpdated < 7 * 24 * 60 * 60 ) {
+
+          log.notice('Maxmind database is already updated');
+          return;
+
+        }
+
+        log.notice('Updating Maxmind database...');
+
+        this.ipDatabaseReady = false;
+
+        // Delete old .mmdb
+        await fs.remove(this.IP_DATABASE_PATH);
+
+        const downloadLink = mustache.render(this.maxmindConfig.dbLink, { key: this.maxmindConfig.key });
+        const response = await axios.get(downloadLink, { responseType: 'stream' });
+        const gzWriter = fs.createWriteStream(this.IP_DATABASE_PATH + '.tar.gz');
+        let hadError = false;
+
+        // Write .mmdb.gz file
+        await new Promise((resolve, reject) => {
+
+          response.data
+          .pipe(gzWriter)
+          .on('error', (error: Error) => {
+
+            hadError = true;
+            gzWriter.close();
+            reject(error);
+
+          })
+          .on('close', () => {
+
+            if ( ! hadError ) resolve();
+
+          });
+
+        });
+
+        // Unzip to .mmdb
+        await new Promise((resolve, reject) => {
+
+          targz.decompress({
+            src: this.IP_DATABASE_PATH + '.tar.gz',
+            dest: this.IP_DATABASE_PATH
+          }, error => {
+
+            if ( error ) reject(error);
+            else resolve();
+
+          });
+
+        });
+
+        // Move .mmdb file outside of directory
+        const contentDirName = (await fs.readdir(this.IP_DATABASE_PATH))[0];
+        const contentMmdbName = (await fs.readdir(path.resolve(this.IP_DATABASE_PATH, contentDirName)))
+        .filter(filename => filename.substr(-5).toLowerCase() === '.mmdb')[0];
+
+        await fs.move(path.resolve(this.IP_DATABASE_PATH, contentDirName, contentMmdbName), this.IP_DATABASE_PATH + '.temp');
+        await fs.remove(this.IP_DATABASE_PATH);
+        await fs.rename(this.IP_DATABASE_PATH + '.temp', this.IP_DATABASE_PATH);
+
+        // Delete .mmdb.gz
+        await fs.remove(this.IP_DATABASE_PATH + '.tar.gz');
+
+        data.lastUpdated = Date.now();
+
+        log.notice('Maxmind database updated');
+
+      });
+
+      this.tasks.events.on('maxmind-update:error', (error: Error) => {
+
+        log.error(`Task "maxmind-update" failed:`, error);
+
+      });
+
+      this.tasks.events.on('maxmind-update:after', async () => {
+
+        this.ipDatabase = await maxmind.open<CountryResponse>(this.IP_DATABASE_PATH);
+
+        this.ipDatabaseReady = true;
+
+      });
+
     });
 
   }
@@ -501,8 +622,13 @@ export class GamesService implements OnConfig {
   * Makes a game purchase under the specified user account.
   * @param id The game ID.
   * @param uid The user ID.
+  * @param ip The IP of the user.
   */
-  public async purchaseGame(id: string, uid: string): Promise<string> {
+  public async purchaseGame(id: string, uid: string, ip: string): Promise<string> {
+
+    // If IP database is being updated
+    if ( ! this.ipDatabaseReady )
+      throw new ServerError('Cannot purchase game at this time! Please try again later.', 'game-purchase-error');
 
     // Find user
     const user = await UserModel.findById(uid).exec();
@@ -515,17 +641,37 @@ export class GamesService implements OnConfig {
     if ( ! game ) throw new ServerError('Game not found!', 'game-purchase-error');
 
     // Check user's age against game's age restrictions
-    const userAge = this.calculateAge(user.dob);
-    const restrictions: number[] = [];
+    // Remove IPv6 prefix and convert to IPv4
+    if ( ip.includes('::ffff:') ) ip = ip.substr(7);
 
-    for ( const restriction of game.ageRatings ) {
+    // If valid IP
+    if ( maxmind.validate(ip) ) {
 
-      restrictions.push(restriction.age);
+      // Calculate user age from date of birth
+      const userAge = this.calculateAge(user.dob);
+
+      // Get country by IP
+      const location = this.ipDatabase.get(ip);
+      // Get ratings
+      const pegiRating = game.ageRatings.filter(rating => rating.organization === 'PEGI')[0];
+      const esrbRating = game.ageRatings.filter(rating => rating.organization === 'ESRB')[0];
+
+      // If PEGI rating must be applied and available
+      if ( pegiRating && (location.continent.code === 'EU' || location.country.iso_code === 'IL') ) {
+
+        if ( userAge < pegiRating.age )
+          throw new ServerError('Cannot make the purchase due to game\'s age restrictions!', 'game-purchase-error');
+
+      }
+      // Otherwise apply ESRB (if available)
+      else if ( esrbRating && location.continent.code !== 'EU' && location.country.iso_code !== 'IL' ) {
+
+        if ( userAge < esrbRating.age )
+          throw new ServerError('Cannot make the purchase due to game\'s age restrictions!', 'game-purchase-error');
+
+      }
 
     }
-
-    if ( userAge < Math.min(...restrictions) )
-      throw new ServerError('Cannot make the purchase due to game\'s age restrictions!', 'game-purchase-error');
 
     // Find library
     const library = await LibraryModel.findById(uid).exec();

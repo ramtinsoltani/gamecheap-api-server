@@ -48,5 +48,9 @@
       "headers": "https://images.igdb.com/igdb/image/upload/t_screenshot_huge/{{id}}.jpg"
     }
   },
+  "maxmind": {
+    "dbLink": "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key={{key}}&suffix=tar.gz",
+    "key": "NOT_PROVIDED"
+  },
   "consoleLogLevels": "all"
 }

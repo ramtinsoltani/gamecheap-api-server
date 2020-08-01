@@ -167,7 +167,7 @@ export class GamesRouter implements OnInjection {
 
   public gamesPurchaseById(req: AuthenticatedRequest, res: Response) {
 
-    this.games.purchaseGame(<string>req.params.id, req.tokenData.uid)
+    this.games.purchaseGame(<string>req.params.id, req.tokenData.uid, req.ip)
     .then(id => res.json({ message: 'Game was successfully purchased.', id }))
     .catch(error => res.status(400).json(error));
 

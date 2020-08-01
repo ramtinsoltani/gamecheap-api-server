@@ -89,6 +89,9 @@ The server config file is located at `/src/config.json` and accepts the followin
 | igdb.urlTemplates.**screenshotsLarge** | String | A template for constructing a large screenshot image URL. |
 | igdb.urlTemplates.**screenshotsSmall** | String | A template for constructing a small screenshot image URL. |
 | igdb.urlTemplates.**headers** | String | A template for constructing a header image URL. |
+| **maxmind** | Object | An object containing Maxmind API configuration keys. |
+| maxmind.**dbLink** | String | A mustache URL template for generating GeoLite2 Country database download links. |
+| maxmind.**key** | String | A Maxmind license key. |
 
 > **NOTE:** Most values are provided in `/src/config.sample.josn` while some sensitive information has been left out (e.g. SMTP configuration values). Make sure to copy the sample config to `/src/config.json` and provide all the left out information (where it says `NOT_PROVIDED`) before running the server.
 
