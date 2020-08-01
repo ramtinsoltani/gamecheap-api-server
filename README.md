@@ -24,6 +24,7 @@ This server sits in front of a MongoDB and exposes a RESTful API for performing 
   - [Purchases](#purchases)
     - [Purchase History](#purchase-history)
     - [Refunds](#refunds)
+  - [Wishlists](#wishlists)
   - [User Library](#user-library)
     - [Revealing Codes](#revealing-codes)
   - [API Reference](#api-reference)
@@ -221,6 +222,14 @@ The [Purchase Info](#get-purchaseid) can also be used by a user with `user-manag
 Refunds will only be issued when requested by the buyer and if the purchased game code is not yet [revealed](#revealing-codes) in their library:
   - [Refund Purchase Endpoint](#post-purchaseidrefund): Used for refunding a purchase.
 
+## Wishlists
+
+Each user holds one wishlist of game IDs which can be managed through the following endpoints:
+  - [Add Game To Wishlist Endpoint](#post-userwishlistid)
+  - [Remove Game From Wishlist Endpoint](#delete-userwishlistid)
+
+To retrieve the wishlist of any user, use the [Profile Endpoint](#get-userprofile).
+
 ## User Library
 
 The user library contains information about the games and the unrevealed game codes they have purchased. This information can only be requested by the owner and not the admins:
@@ -377,6 +386,32 @@ Adds user credits.
 #### DELETE /user/delete
 
 Deletes user data.
+
+**Headers**:
+  - Authorization: Bearer (access token)
+
+**Response**: [Message Response](#message-response)
+
+---
+
+#### POST /user/wishlist/:id
+
+Adds a game ID to a user's wishlist.
+
+**Account Restriction**: Must be verified
+
+**Headers**:
+  - Authorization: Bearer (access token)
+
+**Response**: [Message Response](#message-response)
+
+---
+
+#### DELETE /user/wishlist/:id
+
+Removes a game ID from a user's wishlist.
+
+**Account Restriction**: Must be verified
 
 **Headers**:
   - Authorization: Bearer (access token)
@@ -929,6 +964,7 @@ interface {
   credits: number;
   verified: boolean;
   accessScopes: string[];   // Can contain 'inventory-management' and 'user-management'
+  wishlist: string[];       // A list of game IDs the user has added to their wishlist.
   createdAt: number;
   updatedAt: number;
 }

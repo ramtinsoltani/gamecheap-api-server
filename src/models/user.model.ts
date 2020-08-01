@@ -17,6 +17,7 @@ const UserSchema = new Schema({
     expiration: Number
   }],
   accessScopes: [String],
+  wishlist: [String],
   createdAt: Number,
   updatedAt: Number
 });
@@ -80,6 +81,8 @@ export interface UserDocument extends UserBaseInfo, Document {
     */
     expiration: number;
   }>;
+  /** User's wishlist of game IDs. */
+  wishlist: Array<string>;
   /** Document creation time. */
   createdAt: number;
   /** Last document update time. */

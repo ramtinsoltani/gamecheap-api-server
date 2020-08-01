@@ -39,6 +39,14 @@ import { objectIdParamValidator } from '@steroids/validator/object-id';
       })
     ]},
     { path: '/user/delete', method: RouteMethod.DELETE, handler: 'userDelete' },
+    // The following two endpoints require a verified account
+    { path: '/user/wishlist', handler: 'verified' },
+    { path: '/user/wishlist/:id', method: RouteMethod.POST, handler: 'userWishlistAdd', validate: [
+      custom(objectIdParamValidator)
+    ]},
+    { path: '/user/wishlist/:id', method: RouteMethod.DELETE, handler: 'userWishlistDelete', validate: [
+      custom(objectIdParamValidator)
+    ]},
     // All endpoints from this point downward require user access scope
     { path: '/user', handler: 'userAccessScope' },
     // All endpoints from this point downward require a verified account
@@ -119,6 +127,22 @@ export class UserRouter implements OnInjection {
     // Delete current user data
     this.user.deleteUserData(req.tokenData.uid)
     .then(() => res.json({ message: 'User data has been successfully deleted.' }))
+    .catch(error => res.status(400).json(error));
+
+  }
+
+  public userWishlistAdd(req: AuthenticatedRequest, res: Response) {
+
+    this.user.addGameToWishlist(req.params.id, req.tokenData.uid)
+    .then(() => res.json({ message: 'Wishlist successfully updated.' }))
+    .catch(error => res.status(400).json(error));
+
+  }
+
+  public userWishlistDelete(req: AuthenticatedRequest, res: Response) {
+
+    this.user.deleteGameFromWishlist(req.params.id, req.tokenData.uid)
+    .then(() => res.json({ message: 'Wishlist successfully updated.' }))
     .catch(error => res.status(400).json(error));
 
   }

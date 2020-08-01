@@ -88,4 +88,38 @@ export class UserService {
 
   }
 
+  /**
+  * Adds a game ID to a user's wishlist.
+  * @param id The game ID.
+  * @param uid The user ID.
+  */
+  public async addGameToWishlist(id: string, uid: string) {
+
+    const user = await UserModel.findById(uid).exec();
+
+    if ( ! user ) throw new ServerError('User not found!', 'user-wishlist-add-error');
+
+    user.wishlist.push(id);
+
+    await user.save();
+
+  }
+
+  /**
+  * Deletes a game ID from a user's wishlist.
+  * @param id The game ID.
+  * @param uid The user ID.
+  */
+  public async deleteGameFromWishlist(id: string, uid: string) {
+
+    const user = await UserModel.findById(uid).exec();
+
+    if ( ! user ) throw new ServerError('User not found!', 'user-wishlist-delete-error');
+
+    user.wishlist = user.wishlist.filter(gameId => gameId !== id);
+
+    await user.save();
+
+  }
+
 }

@@ -99,6 +99,7 @@ export class AuthService implements OnInjection, OnConfig {
     user.verified = false;
     user.passwordHash = await bcrypt.hash(info.password, 10);
     user.accessScopes = info.accessScopes || [];
+    user.wishlist = [];
 
     // Save the document
     user = await user.save();
