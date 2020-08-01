@@ -122,7 +122,7 @@ node @steroids/main
 
 The majority of the endpoints provided by this server is protected and require authentication. Users need to provide their acquired access [tokens](#tokens) in order to use the endpoints.
 
-Some endpoints that perform administrative operations need the user to possess the [appropriate access](#access-scopes) scope in order to grant access.
+Some endpoints that perform administrative operations need the user to possess the appropriate [access scope](#access-scopes) in order to grant access.
 
 ### Account Registration
 
@@ -142,11 +142,11 @@ If a new email is needed, it can be requested through the [Resend Verification E
 
 ### Password Reset
 
-A password reset can be requested through the [Password Reset Endpoint](#post-authresetsend). This endpoint send a short-living code to the user's email which must be provided in the [Complete Password Reset Endpoint](#post-authresetcomplete) with the new password.
+A password reset can be requested through the [Password Reset Endpoint](#post-authresetsend). This endpoint sends a short-living code to the user's email which must be provided in the [Complete Password Reset Endpoint](#post-authresetcomplete) with the new password.
 
 ### Tokens
 
-The server issues two types of token upon authentication:
+The server issues two types of tokens upon authentication:
   - Access tokens: Short-lived tokens that are used for accessing all protected endpoints.
   - Refresh tokens: Long-lived tokens that are used for requesting new access tokens once they expire.
 
@@ -214,7 +214,7 @@ A user's purchase history can be retrieved by using the following endpoints:
   - [Purchase Info](#get-purchaseid): Used to retrieve a specific purchase info.
   - [Purchase History](#get-purchasehistory): Used to retrieve all purchase info.
 
-The [Purchase Info](#get-purchaseid) can also be used by a user with `user-management` access scope to retrieve purchase information of another user, alongside the following endpoint:
+The [Purchase Info Endpoint](#get-purchaseid) can also be used by a user with `user-management` access scope to retrieve purchase information of another user, alongside the following endpoint:
   - [User Purchase History](#get-purchaseidhistory): Used to retrieve all purchase info of a specific user.
 
 ### Refunds
@@ -228,7 +228,7 @@ Each user holds one wishlist of game IDs which can be managed through the follow
   - [Add Game To Wishlist Endpoint](#post-userwishlistid)
   - [Remove Game From Wishlist Endpoint](#delete-userwishlistid)
 
-To retrieve the wishlist of any user, use the [Profile Endpoint](#get-userprofile).
+To retrieve an authenticated user's wishlist, use [Profile Endpoint](#get-userprofile), and for retrieving another user's wishlist [User Profile Endpoint](#get-useridprofile).
 
 ## User Library
 
