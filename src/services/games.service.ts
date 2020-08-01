@@ -53,7 +53,7 @@ export class GamesService implements OnConfig, OnInjection {
 
   }
 
-  async onConfig(config: ServerConfig) {
+  onConfig(config: ServerConfig) {
 
     this.igdbConfig = config.igdb;
     this.igdbApi = axios.create({
@@ -67,21 +67,21 @@ export class GamesService implements OnConfig, OnInjection {
     });
     this.maxmindConfig = config.maxmind;
 
-    await this.init();
+    this.init();
 
   }
 
   /**
   * Registers tasks.
   */
-  async init() {
+  init() {
 
     this.tasks.events.on('ready', () => {
 
       // Run weekly
       this.tasks.register('maxmind-update', 7 * 24 * 60 * 60, true, async data => {
 
-        if ( data.lastUpdated && Date.now() - data.lastUpdated < 7 * 24 * 60 * 60 ) {
+        if ( data.lastUpdated && Date.now() - data.lastUpdated < 7 * 24 * 60 * 60 * 1000 ) {
 
           log.notice('Maxmind database is already updated');
           return;

@@ -3,6 +3,7 @@ import UserModel from '@steroids/model/user';
 import LibraryModel from '@steroids/model/library';
 import { UserRegistrationInfo, AccessScopes } from '@steroids/model/user';
 import { EmailService, PasswordResetTemplateData, VerificationTemplateData } from '@steroids/service/email';
+import { TasksService } from '@steroids/service/tasks';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
@@ -15,10 +16,12 @@ export class AuthService implements OnInjection, OnConfig {
   private tokenConfig: ServerConfig['token'];
   private hostUrl: string;
   private email: EmailService;
+  private tasks: TasksService;
 
   onInjection(services: any) {
 
     this.email = services.email;
+    this.tasks = services.tasks;
 
   }
 
@@ -26,6 +29,52 @@ export class AuthService implements OnInjection, OnConfig {
 
     this.tokenConfig = config.token;
     this.hostUrl = config.hostUrl;
+
+    this.init();
+
+  }
+
+  /**
+  * Registers cleanup tasks.
+  */
+  init() {
+
+    this.tasks.events.on('ready', () => {
+
+      this.tasks.register('user-refresh-tokens-cleanup', 60, true, async () => {
+
+        const users = await UserModel.find().exec();
+
+        for ( const user of users ) {
+
+          let changed = false;
+
+          for ( let i = 0; i < user.refreshTokens.length; i++ ) {
+
+            // Expired refresh token
+            if ( user.refreshTokens[i].expiration < Date.now() / 1000 ) {
+
+              user.refreshTokens.splice(i, 1);
+              i--;
+              changed = true;
+
+            }
+
+          }
+
+          if ( changed ) await user.save();
+
+        }
+
+      });
+
+      this.tasks.events.on('user-refresh-tokens-cleanup:error', (error: Error) => {
+
+        log.warn('User refresh token cleanup failed!', error);
+
+      });
+
+    });
 
   }
 
